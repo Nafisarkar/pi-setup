@@ -1,0 +1,24 @@
+{
+  "defaultProvider": "commandcode",
+  "defaultModel": "xiaomi/mimo-v2.6-flash",
+  "packages": [
+    "npm:pi-commandcode-provider",
+    "npm:pi-quota-monitoring",
+    "npm:@tintinweb/pi-subagents",
+    "npm:pi-web-access",
+    "npm:@tintinweb/pi-tasks",
+    "npm:pi-cc-extensions",
+    "npm:@ff-labs/pi-fff",
+    "npm:pi-markdown-preview",
+    "npm:pi-docparser"
+  ],
+  "lastChangelogVersion": "0.87.1",
+  "theme": "cc-dark",
+  "tuiMode": "fullscreen",
+  "defaultTools": [
+    "read",
+    "powershell",
+    "edit",
+    "write"
+  ]
+}

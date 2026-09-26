@@ -1,0 +1,15 @@
+# Normalise line endings so a checkout on any OS produces identical files.
+* text=auto eol=lf
+
+# Windows-native scripts keep CRLF.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Lockfiles are generated — leave them exactly as npm wrote them.
+package-lock.json -text
+
+# Never touch binary assets.
+*.png binary
+*.jpg binary
+*.exe binary

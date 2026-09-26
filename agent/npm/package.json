@@ -1,0 +1,15 @@
+{
+  "name": "pi-extensions",
+  "private": true,
+  "dependencies": {
+    "@ff-labs/pi-fff": "^0.11.0",
+    "@tintinweb/pi-subagents": "^0.19.0",
+    "@tintinweb/pi-tasks": "^0.9.0",
+    "pi-cc-extensions": "^0.9.4",
+    "pi-commandcode-provider": "^0.7.2",
+    "pi-docparser": "^4.0.0",
+    "pi-markdown-preview": "^0.17.2",
+    "pi-quota-monitoring": "^1.0.3",
+    "pi-web-access": "^0.31.0"
+  }
+}
