@@ -56,7 +56,7 @@ $globalTools = [ordered]@{
     'agent-browser' = 'agent-browser@0.38.1'
     'command-code'  = 'command-code@1.66.0'
 }
-Write-Host "[1/4] global tools" -ForegroundColor Yellow
+Write-Host "[1/5] global tools" -ForegroundColor Yellow
 foreach ($bin in $globalTools.Keys) {
     if (Get-Command $bin -ErrorAction SilentlyContinue) {
         Write-Host ("      {0,-14} already installed" -f $bin) -ForegroundColor DarkGray
@@ -67,7 +67,7 @@ foreach ($bin in $globalTools.Keys) {
 }
 
 # ---------------------------------------------------------------- 2. files
-Write-Host "[2/4] syncing config -> agentDir" -ForegroundColor Yellow
+Write-Host "[2/5] syncing config -> agentDir" -ForegroundColor Yellow
 New-Item -ItemType Directory -Force -Path $AgentDir | Out-Null
 
 $items = @(
@@ -90,8 +90,38 @@ foreach ($item in $items) {
     Write-Host "      $item"
 }
 
-# ---------------------------------------------------------------- 3. deps
-Write-Host "[3/4] installing npm packages" -ForegroundColor Yellow
+# ---------------------------------------------------------------- 3. sox
+# agent/bin is gitignored, so sox must be re-fetched on every machine. The
+# dictate extension spawns it directly; without it, dictation fails with
+# "spawn rec ENOENT". The build ships no rec.exe, but resolveRecorder() falls
+# back to sox.exe with '-d', which is equivalent.
+$binDir = Join-Path $AgentDir 'bin'
+if (Test-Path (Join-Path $binDir 'sox.exe')) {
+    Write-Host "[3/5] sox already present" -ForegroundColor DarkGray
+} else {
+    $soxVer = '14.4.2'
+    Write-Host "[3/5] fetching sox $soxVer (win32)" -ForegroundColor Yellow
+    $zipPath = Join-Path $env:TEMP "sox-$soxVer-win32.zip"
+    $url = "https://downloads.sourceforge.net/project/sox/sox/$soxVer/sox-$soxVer-win32.zip"
+    # Validate the PK signature: SourceForge serves an HTML interstitial
+    # instead of the zip on some paths, which would otherwise extract as junk.
+    curl.exe -sSL --fail --max-time 300 -o $zipPath $url
+    $sig = [System.Text.Encoding]::ASCII.GetString((Get-Content $zipPath -Encoding Byte -TotalCount 2))
+    if ($sig -ne 'PK') { Remove-Item $zipPath -Force -EA SilentlyContinue; throw "sox download was not a zip (got '$sig')" }
+
+    $extract = Join-Path $env:TEMP "sox-$soxVer-extract"
+    Remove-Item $extract -Recurse -Force -EA SilentlyContinue
+    Expand-Archive -Path $zipPath -DestinationPath $extract -Force
+    $soxRoot = (Get-ChildItem $extract -Directory | Select-Object -First 1).FullName
+    New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+    Copy-Item (Join-Path $soxRoot 'sox.exe') $binDir -Force
+    Get-ChildItem (Join-Path $soxRoot '*.dll') | ForEach-Object { Copy-Item $_.FullName $binDir -Force }
+    Remove-Item $zipPath, $extract -Recurse -Force -EA SilentlyContinue
+    Write-Host "      sox.exe + $((Get-ChildItem $binDir -Filter *.dll).Count) dlls -> bin\"
+}
+
+# ---------------------------------------------------------------- 4. deps
+Write-Host "[4/5] installing npm packages" -ForegroundColor Yellow
 foreach ($pkgDir in @('npm', 'extensions\visual-tools')) {
     $dir = Join-Path $AgentDir $pkgDir
     if (Test-Path (Join-Path $dir 'package-lock.json')) {
@@ -102,7 +132,7 @@ foreach ($pkgDir in @('npm', 'extensions\visual-tools')) {
 }
 
 # ---------------------------------------------------------------- 4. machine bits
-Write-Host "[4/4] writing machine-specific files" -ForegroundColor Yellow
+Write-Host "[5/5] writing machine-specific files" -ForegroundColor Yellow
 
 # trust.json: mark the home dir as a trusted project root
 $trust = @{ $HOME = $true } | ConvertTo-Json
